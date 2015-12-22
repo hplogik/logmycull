@@ -1,0 +1,31 @@
+{
+  "manifest_version": 2,
+
+  "name": "LOGikcull",
+  "description": "This extension keeps a log of the specific documents you tag in Logikcull",
+  "version": "1.0",
+
+  "background": {
+    "scripts": ["background.js"]
+  },
+
+  "content_scripts": [
+  {
+    "matches": [
+      "https://app.logikcull.com/projects/*"
+    ],
+    "js": ["jquery-2.1.4.min.js", "content.js"]
+  }
+  ],
+
+  "browser_action": {
+    "default_icon": "LOGikcull_not_active.png"
+    //"default_popup": "LOGikcull.html"
+  },
+
+  "permissions": [
+  "tabs",
+  "storage",
+  "activeTab"
+  ]
+}
