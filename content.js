@@ -185,8 +185,8 @@ function observeDocInfoPanel() {
         chrome.runtime.sendMessage({message: "deactivate_icon"});
         console.log("Stopped logging: " + getTimeStamp());
         alert("Doc Info Panel closed no longer logging");
-        storeLog(sessionLog);
-        sessionLog = "";
+        //storeLog(sessionLog);
+        //sessionLog = "";
       };
     });
     observingPanel = true;
@@ -201,7 +201,7 @@ chrome.runtime.onMessage.addListener(
     if( request.message === "clicked_browser_action") {
       //console.log(getFileId() + " | Tags: " + getTags() + " | " + getTimeStamp());
       observeDocInfoPanel();
-      retrieveLog();
+      //retrieveLog();
       docTrack();
     };
 
