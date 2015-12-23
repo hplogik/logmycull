@@ -17,7 +17,7 @@ function storeLog(session) {
 function retrieveLog() {
   chrome.storage.local.get(null, function(result) {
     var docs = result["session-log"].docs
-    try {
+
       if (docs.length === 0) {
         console.log("Log is Empty");
         } else {
@@ -25,11 +25,7 @@ function retrieveLog() {
         console.log(docs.length + " records found...")
 
         docs.forEach(consoleDocs);
-        };
-      catch(err) {
-        console.log("Failed to retrieve a log");
-      }
-    };
+      };
   }); // chrome storage
 }
 
