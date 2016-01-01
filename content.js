@@ -1,6 +1,6 @@
 // content.js
-var observingTags = false; // Stores whether the mutation observer is already active for tags
-var observingPanel = false; // Stores whether the mutation observer is already active for doc info panel
+var observingTags = null; // Stores the mutation observer for tags
+var observingPanel = null; // Stores the mutation observer for doc info panel
 var currentDoc = ""; // Stores the current Doc's File ID, need to check when doc changes
 var currentTags = ""; // Stores the current Doc's Tags, this is defined when tags are applied or doc first laoded
 
@@ -49,6 +49,14 @@ function getFileId() {
   return file_id
 }
 
+function getProjectId() {
+  var project_id = window.location.href.match(/projects\/\d+/);
+
+  project_id = project_id[0].replace('projects/','');
+
+  return project_id
+}
+
 // Tracks changes in the doc by updating currentDoc, currentTags, and comparing changes
 // This function also does the bulk of the log writing.
 function docTrack() {
@@ -68,6 +76,7 @@ function docTrack() {
       // variables to store tag changes
       var tag_added = [];
       var tag_removed = [];
+      var response = {};
 
       // Compares the tags on the doc to the last recorded set of tags for this doc to find what tags were added
       getTags().filter(function(tag) {
@@ -85,15 +94,23 @@ function docTrack() {
 
       // Logs what tags were added/removed
       if (tag_added.length > 0) {
-        console.log("DOC CHANGED: "+getFileId() + " | Tags Added: "+ tag_added + " | " + getTimeStamp());
+        response['tag_added'] = tag_added;
+        //console.log("DOC CHANGED: "+getFileId() + " | Tags Added: "+ tag_added + " | " + getTimeStamp());
       };
 
       if (tag_removed.length > 0) {
-        console.log("DOC CHANGED: "+getFileId() + " | Tags Removed: "+tag_removed + " | " + getTimeStamp());
+        response['tag_removed'] = tag_removed;
+        //console.log("DOC CHANGED: "+getFileId() + " | Tags Removed: "+tag_removed + " | " + getTimeStamp());
       };
 
       //console.log("Tags Added: "+tag_added+" : Tags Removed: "+tag_removed);
-      console.log("DOC STATUS: "+getFileId() + " | Tags: "+ getTags() + " | " + getTimeStamp());
+      response['status'] = getTags();
+      response['file_id'] = getFileId();
+      response['timestamp'] = getTimeStamp();
+      response['project_id'] = getProjectId();
+
+      console.log(JSON.stringify(response))
+      //console.log("DOC STATUS: "+getFileId() + " | Tags: "+ getTags() + " | " + getTimeStamp());
     };
   };
   currentTags = getTags();
@@ -149,12 +166,13 @@ function getTags() {
 };
 
 function observeTags() {
-  if (observingTags === false) {
+  // if observingTags is not instantiated
+  if (observingTags == null) {
     // select the target node, it triggers whenever the doc info panel refreshes from tagging.
     var target = document.getElementById('tag-select-list-region');
     //tag-select-list-region
     // create an observer instance
-    var observer = new MutationObserver(function(_) {
+    observingTags = new MutationObserver(function(_) {
       // Triggers mutation observer and then looks for update
       docTrack();
       //sessionLog.docs.push({ 'file_id': getFileId(), 'tags': getTags(), 'time_stamp': getTimeStamp()});
@@ -164,36 +182,64 @@ function observeTags() {
     // Grab just the immediate Children with their ID attribute changing (i.e. getting destroyed!)
     var config = { attributes: true, childList: true, characterData: true, attributeFilter: ["id"] };
     
-    observingTags = true;
+    //observingTags = true;
     // pass in the target node, as well as the observer options
-    observer.observe(target, config);
+    observingTags.observe(target, config);
   };
 };
 
+
+//So ti doesn't matter if doc info panel is open or not....
 function observeDocInfoPanel() {
-  if (observingPanel === false) {
+  if (observingPanel == null) {
     // selects doc info panel
     var target = document.getElementById("tertiary");
     var config = { attributes: true }
-    var observer = new MutationObserver(function(panel) {
+    observingPanel = new MutationObserver(function(panel) {
       // Wait for mutation to begin observer
+      // if doc info panel moves from open to closed...
       if( panel[0].target.getAttribute("class") === "col activeCol" ) {
         //console.log(getFileId() + " | Tags: " + getTags() + " | " + getTimeStamp());
         chrome.runtime.sendMessage({message: "activate_icon"});
         observeTags();
       } else {
-        chrome.runtime.sendMessage({message: "deactivate_icon"});
+        // if doc info panel goes from open to closed...
+
         console.log("Stopped logging: " + getTimeStamp());
         alert("Doc Info Panel closed no longer logging");
         //storeLog(sessionLog);
         //sessionLog = "";
       };
     });
-    observingPanel = true;
+    //observingPanel = true;
 
-    observer.observe(target, config);
+    observingPanel.observe(target, config);
   };
 };
+
+function readyForObserving() {
+  // detect if doc info panel is not visible
+  // detect if doc viewer is open
+  doc_viewer = document.getElementById('document-viewer');
+  // if doc viewer is not present and tags were being observed
+  if (doc_viewer == null && observingTags) {
+    alert("Doc Tagging no longer being monitored");
+    chrome.runtime.sendMessage({message: "deactivate_icon"});
+    console.log("Stopped logging: " + getTimeStamp());
+    observingTags.disconnect;
+    observingTags = null;
+  }
+  // if doc viewer open but it was not observing tags
+  else if (doc_viewer && observingTags == null) {
+    chrome.runtime.sendMessage({message: "activate_icon"});
+    observeTags();
+  }
+  // assuming that last possibility is doc viewer close and not observing tags
+  else {
+    // Doing nothing
+  };
+}
+
 
 // When page updates to new document or initial LOGikcull click, log the first page and start observer
 chrome.runtime.onMessage.addListener(
@@ -201,7 +247,7 @@ chrome.runtime.onMessage.addListener(
     if( request.message === "clicked_browser_action") {
       //console.log(getFileId() + " | Tags: " + getTags() + " | " + getTimeStamp());
       observeDocInfoPanel();
-      //retrieveLog();
+
       docTrack();
     };
 
