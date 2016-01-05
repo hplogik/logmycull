@@ -220,7 +220,7 @@ function observeDocInfoPanel() {
 function readyForObserving() {
   // detect if doc info panel is not visible
   // detect if doc viewer is open
-  doc_viewer = document.getElementById('document-viewer');
+  var doc_viewer = document.getElementById('document-viewer');
   // if doc viewer is not present and tags were being observed
   if (doc_viewer == null && observingTags) {
     alert("Doc Tagging no longer being monitored");
@@ -228,11 +228,14 @@ function readyForObserving() {
     console.log("Stopped logging: " + getTimeStamp());
     observingTags.disconnect;
     observingTags = null;
+    console.log("Doc viewer closed and observing was open, stopping observer: " + observingTags)
   }
   // if doc viewer open but it was not observing tags
   else if (doc_viewer && observingTags == null) {
     chrome.runtime.sendMessage({message: "activate_icon"});
     observeTags();
+    console.log("Viewer open and observing not open, starting observer: " + observingTags)
+    docTrack();
   }
   // assuming that last possibility is doc viewer close and not observing tags
   else {
@@ -244,18 +247,9 @@ function readyForObserving() {
 // When page updates to new document or initial LOGikcull click, log the first page and start observer
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
-    if( request.message === "clicked_browser_action") {
-      //console.log(getFileId() + " | Tags: " + getTags() + " | " + getTimeStamp());
-      observeDocInfoPanel();
-
-      docTrack();
-    };
-
-    if( request.message === "url_updated" ) {
-      //console.log(getFileId() + " | Tags at viewing: " + getTags() + " | " + getTimeStamp()); // grabbing initial tags
-      observeTags();
-    };
-  }
-);
+    if( request.message === "clicked_browser_action" || request.message === "url_updated") {
+      readyForObserving();
+    }
+});
 
 console.log("LOGikcull Online!");

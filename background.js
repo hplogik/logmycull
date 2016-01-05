@@ -13,7 +13,8 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 
 // Listens for when the Tab updates
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-  if (changeInfo.url.indexOf("file_id=") > 0) {
+  console.log(changeInfo);
+  if (changeInfo.url && changeInfo.url.indexOf("file_id=") > 0) {
     chrome.tabs.sendMessage(tabId, {"message": "url_updated"});
   } else {
     chrome.tabs.sendMessage(tabId, {"message": "not_LC_url"});
@@ -39,3 +40,21 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     });
   }
 })
+
+// Monitores web requests related to tags
+// some of these results don't make sense...
+/*
+function logging(details) {
+  console.log("Logging received: " + details)
+};
+*/
+
+//var filter = {urls: ["https://*.logikcull.com/*/apply_tags"]};
+/*
+var extra_info = ['requestBody'];
+
+chrome.webRequest.onBeforeRequest.addListener(function(details) {
+  console.log(details.requestBody.formData);
+  }, filter, extra_info
+);
+*/

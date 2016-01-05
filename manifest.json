@@ -24,6 +24,8 @@
   },
 
   "permissions": [
+  "webRequest",
+  "https://*.logikcull.com/*",
   "tabs",
   "storage",
   "activeTab"
