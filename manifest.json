@@ -8,24 +8,28 @@
   "background": {
     "scripts": ["background.js"]
   },
+  "options_page": "LogMyCull.html",
 
   "content_scripts": [
   {
     "matches": [
-      "https://app.logikcull.com/projects/*"
+      "https://app.logikcull.com/projects/*",
+      "http://integration.logikcull/projects/*"
     ],
     "js": ["jquery-2.1.4.min.js", "content.js"]
   }
   ],
 
   "browser_action": {
-    "default_icon": "LOGikcull_not_active.png"
+    "default_icon": "LOGikcull_not_active.png",
+    "default_title": "LogMyCull"
     //"default_popup": "LOGikcull.html"
   },
 
   "permissions": [
   "webRequest",
   "https://*.logikcull.com/*",
+  "http://integration.logikcull/*",
   "tabs",
   "storage",
   "activeTab"

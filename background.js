@@ -13,10 +13,9 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 
 // Listens for when the Tab updates
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-  console.log(changeInfo);
   if (changeInfo.url && changeInfo.url.indexOf("file_id=") > 0) {
     chrome.tabs.sendMessage(tabId, {"message": "url_updated"});
-  } else {
+  } else if (changeInfo.url && changeInfo.url.indexOf("file_id=") == 0) {
     chrome.tabs.sendMessage(tabId, {"message": "not_LC_url"});
     chrome.browserAction.setIcon({
       path : "LOGikcull_not_active.png"
